@@ -1,0 +1,43 @@
+<!doctype html>
+<style>
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#draggable {
+  cursor: pointer;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100px;
+  height: 100px;
+  background: black;
+}
+</style>
+<div id="draggable"></div>
+<script>
+const draggable = document.getElementById('draggable');
+
+draggable.addEventListener('mousedown', event => onMouseDown(draggable, event));
+
+const onMouseDown = (el, event) => {
+  const deltaX = event.clientX - el.offsetLeft;
+  const deltaY = event.clientY - el.offsetTop;
+
+  const onMouseMove = (event) => {
+    el.style.left = (event.clientX - deltaX) + 'px';
+    el.style.top = (event.clientY - deltaY) + 'px';
+  };
+
+  const onMouseUp = () => {
+    document.removeEventListener('mousemove', onMouseMove, true);
+    document.removeEventListener('mouseup', onMouseUp, true);
+  };
+
+  document.addEventListener('mousemove', onMouseMove, true);
+  document.addEventListener('mouseup', onMouseUp, true);
+};
+</script>

@@ -1,0 +1,79 @@
+<!doctype html>
+<style>
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#draggable {
+  cursor: pointer;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100px;
+  height: 100px;
+  background: black;
+}
+</style>
+<div id="draggable"></div>
+<script src="https://unpkg.com/@reactivex/rxjs@5.0.0/dist/global/Rx.js"></script>
+<script>
+let moveStartsWithDirection = mousedown.concatMap(startEvent => 
+  mousemove.takeUntil(mouseup)
+    .elementAt(5)
+    .catch(err => Rx.Observable.empty())
+    .map(mousemoveEvent => {
+      return {
+        x: startEvent.x, 
+        y: startEvent.y,
+        dx: mousemoveEvent.x - startEvent.x,
+        dy: mousemoveEvent.y - startEvent.y
+      };
+    }).filter(startEvent => 
+      Math.abs(startEvent.dx) < Math.abs(startEvent.dy)
+    ).takeUntil(ends).map(endEvent => {
+      const x = endEvent.x - startEvent.x;
+      const y = endEvent.y - startEvent.y;
+      return {
+        x, y
+      };
+    });
+);
+
+// Vertical move starts: Keep only those move start events 
+// where the 3rd subsequent move event is rather vertical than horizontal
+let verticalMoveStarts = moveStartsWithDirection;
+
+// Horizontal move starts: Keep only those move start events 
+// where the 3rd subsequent move event is rather horizontal than vertical
+let horizontalMoveStarts = moveStartsWithDirection.filter(dragStartEvent => 
+  Math.abs(dragStartEvent.intialDeltaX) >= Math.abs(dragStartEvent.initialDeltaY)
+);
+
+// Take the moves until an end occurs
+const movesUntilEnds = dragStartEvent => 
+  moves.takeUntil(ends).map(dragEvent => {
+    const x = dragEvent.x - dragStartEvent.x;
+    const y = dragEvent.y - dragStartEvent.y;
+    return {x, y};
+  });
+
+let verticalMoves = verticalMoveStarts.concatMap(movesUntilEnds);
+let horizontalMoves = horizontalMoveStarts.concatMap(movesUntilEnds);
+
+const lastMovesAtEnds = dragStartEvent => 
+  ends.first().map(dragEndEvent => {
+    const x = dragEndEvent.x - dragStartEvent.x;
+    const y = dragEndEvent.y - dragStartEvent.y;
+    return {x, y};
+  });
+
+let verticalMoveEnds = verticalMoveStarts.concatMap(lastMovesAtEnds);
+let horizontalMoveEnds = horizontalMoveStarts.concatMap(lastMovesAtEnds);
+
+return { 
+  verticalMoves, verticalMoveEnds,
+  horizontalMoves, horizontalMoveEnds
+};

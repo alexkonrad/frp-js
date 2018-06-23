@@ -1,0 +1,43 @@
+<!doctype html>
+<style>
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#draggable {
+  cursor: pointer;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100px;
+  height: 100px;
+  background: black;
+}
+</style>
+<div id="draggable"></div>
+<script src="https://unpkg.com/@reactivex/rxjs@5.0.0/dist/global/Rx.js"></script>
+<script>
+const draggable = document.getElementById('draggable');
+
+const mousedown = Rx.Observable.fromEvent(draggable, 'mousedown');
+const mousemove = Rx.Observable.fromEvent(document, 'mousemove');
+const mouseup = Rx.Observable.fromEvent(document, 'mouseup');
+
+mousedown.flatMap(md => {
+    const startX = md.clientX - draggable.offsetLeft;
+    const startY = md.clientY - draggable.offsetTop;
+
+    return mousemove.map(event => { 
+      return {
+        left: event.clientX - startX,
+        top: event.clientY - startY
+      }
+    }).takeUntil( mouseup );
+  }).subscribe(pos => {
+    draggable.style.left = pos.left + 'px';
+    draggable.style.top = pos.top + 'px';
+  });
+</script>
